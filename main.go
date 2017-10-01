@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -101,10 +102,24 @@ func file(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 		fmt.Println("\nFile: ", f, "\nHeaders: ", fh, "e\n Error: ", err)
 
+		// read content of file
 		bs, err := ioutil.ReadAll(f)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+
+		// write content of file to ./files directory
+		dst, err := os.Create(filepath.Join("./files", fh.Filename))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+
+		_, err = dst.Write(bs)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
 		s = string(bs)
